@@ -3,477 +3,439 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Video Downloader</title>
+    <title>Resource Shrimp — Download Anything</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --bg: #fafafa; --fg: #171717; --card: #ffffff; --muted: #737373;
+            --border: rgba(0,0,0,0.06); --border-strong: rgba(0,0,0,0.1);
+            --primary: #171717; --primary-fg: #ffffff; --success: #16a34a; --error: #dc2626;
+            --font-body: 'Inter', -apple-system, sans-serif; --font-display: 'DM Sans', -apple-system, sans-serif;
         }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0a0a0a; --fg: #ededed; --card: #141414; --muted: #a3a3a3;
+                --border: rgba(255,255,255,0.06); --border-strong: rgba(255,255,255,0.1);
+                --primary: #ededed; --primary-fg: #0a0a0a;
+            }
+        }
+        body { font-family: var(--font-body); background: var(--bg); color: var(--fg); min-height: 100vh; -webkit-font-smoothing: antialiased; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
+        @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse-ring { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 40px;
-            max-width: 540px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
+        .navbar { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 10px; padding: 10px 20px; background: rgba(255,255,255,0.8); backdrop-filter: blur(20px) saturate(180%); border: 1px solid var(--border); border-radius: 100px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        @media (prefers-color-scheme: dark) { .navbar { background: rgba(20,20,20,0.8); } }
+        .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--fg); }
+        .nav-logo-icon { width: 28px; height: 28px; background: var(--fg); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .nav-logo-text { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+        .nav-links { display: flex; align-items: center; gap: 4px; margin-left: 16px; }
+        .nav-link { padding: 6px 12px; font-size: 13px; color: var(--muted); text-decoration: none; border-radius: 100px; transition: all 0.2s; }
+        .nav-link:hover { color: var(--fg); background: var(--border); }
 
-        h1 {
-            color: #1a1a2e;
-            margin-bottom: 8px;
-            font-size: 28px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .container { max-width: 640px; margin: 0 auto; padding: 120px 24px 80px; }
+        .hero { text-align: center; margin-bottom: 48px; }
+        .pill-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 100px; font-size: 13px; color: var(--muted); margin-bottom: 24px; animation: fade-up 0.5s ease-out both; }
+        .pill-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; animation: pulse-ring 2s ease-out infinite; }
+        .hero h1 { font-family: var(--font-display); font-size: clamp(36px, 8vw, 56px); font-weight: 700; line-height: 1.1; letter-spacing: -0.03em; animation: fade-up 0.5s ease-out 0.1s both; }
+        .hero p { margin-top: 16px; font-size: 17px; color: var(--muted); max-width: 440px; margin-left: auto; margin-right: auto; animation: fade-up 0.5s ease-out 0.2s both; }
 
-        .h1-icon {
-            font-size: 32px;
-        }
+        .input-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 8px 24px rgba(0,0,0,0.04); animation: fade-up 0.5s ease-out 0.3s both; }
+        .input-row { display: flex; gap: 10px; }
+        .url-input { flex: 1; padding: 14px 18px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; font-size: 15px; font-family: var(--font-body); color: var(--fg); transition: all 0.2s; }
+        .url-input:focus { outline: none; border-color: var(--border-strong); box-shadow: 0 0 0 4px rgba(0,0,0,0.03); }
+        @media (prefers-color-scheme: dark) { .url-input:focus { box-shadow: 0 0 0 4px rgba(255,255,255,0.03); } }
+        .url-input::placeholder { color: var(--muted); }
 
-        .subtitle {
-            color: #666;
-            margin-bottom: 12px;
-            font-size: 14px;
-        }
+        .btn-primary { padding: 14px 28px; background: var(--primary); color: var(--primary-fg); border: none; border-radius: 12px; font-size: 14px; font-weight: 600; font-family: var(--font-body); cursor: pointer; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-primary .spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: currentColor; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        .btn-primary.loading .spinner { display: block; }
+        .btn-primary.loading .btn-label { display: none; }
 
-        .supported-sites {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 25px;
-        }
+        .type-badge { display: none; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; margin-top: 12px; animation: fade-in 0.3s ease-out; }
+        .type-badge.active { display: flex; }
+        .type-icon { width: 36px; height: 36px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .type-info { flex: 1; }
+        .type-label { font-size: 14px; font-weight: 600; }
+        .type-hint { font-size: 12px; color: var(--muted); }
 
-        .site-tag {
-            font-size: 11px;
-            padding: 4px 10px;
-            background: #f0f0f0;
-            border-radius: 12px;
-            color: #666;
-        }
+        .options { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); animation: fade-in 0.3s ease-out; }
+        .options.active { display: block; }
+        .options-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; }
 
-        .site-tag .icon {
-            margin-right: 4px;
-        }
+        .quality-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+        .quality-card { position: relative; padding: 16px 12px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); text-align: center; }
+        .quality-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+        .quality-card.selected { border-color: var(--fg); background: var(--fg); }
+        .quality-card.selected .quality-res, .quality-card.selected .quality-desc { color: var(--primary-fg); }
+        .quality-badge { position: absolute; top: -6px; right: -6px; padding: 2px 8px; background: var(--fg); color: var(--primary-fg); font-size: 9px; font-weight: 700; border-radius: 6px; letter-spacing: 0.05em; }
+        .quality-card.selected .quality-badge { background: var(--primary-fg); color: var(--fg); }
+        .quality-res { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--fg); }
+        .quality-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
+        .audio-toggle { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 3px; margin-bottom: 16px; }
+        .audio-toggle-btn { flex: 1; padding: 10px; background: transparent; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: var(--font-body); color: var(--muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .audio-toggle-btn.active { background: var(--card); color: var(--fg); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
-        input {
-            flex: 1;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: border-color 0.2s;
-        }
+        .audio-formats { display: none; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+        .audio-formats.active { display: flex; }
+        .audio-chip { padding: 8px 14px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 100px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+        .audio-chip:hover { border-color: var(--border-strong); }
+        .audio-chip.selected { background: var(--fg); border-color: var(--fg); color: var(--primary-fg); }
+        .lossless-badge { font-size: 9px; padding: 2px 6px; background: rgba(22,163,74,0.1); color: var(--success); border-radius: 100px; font-weight: 600; }
+        .audio-chip.selected .lossless-badge { background: rgba(255,255,255,0.2); color: var(--primary-fg); }
 
-        input:focus {
-            outline: none;
-            border-color: #6366f1;
-        }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--border); }
+        .toggle-text { font-size: 13px; color: var(--muted); }
+        .toggle { position: relative; width: 40px; height: 22px; background: var(--border-strong); border-radius: 11px; cursor: pointer; transition: background 0.2s; }
+        .toggle.active { background: var(--fg); }
+        .toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: var(--card); border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .toggle.active::after { transform: translateX(18px); background: var(--primary-fg); }
 
-        button {
-            padding: 14px 24px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.1s, box-shadow 0.2s;
-        }
+        .access-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .access-btn { display: flex; align-items: center; gap: 12px; padding: 14px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: left; font-family: var(--font-body); }
+        .access-btn:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+        .access-icon { font-size: 20px; }
+        .access-text { display: flex; flex-direction: column; }
+        .access-title { font-size: 13px; font-weight: 600; color: var(--fg); }
+        .access-desc { font-size: 11px; color: var(--muted); }
 
-        button:hover {
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
+        .progress-section { display: none; margin-top: 20px; animation: fade-in 0.3s ease-out; }
+        .progress-section.active { display: block; }
+        .progress-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 8px 24px rgba(0,0,0,0.04); }
 
-        button:active {
-            transform: scale(0.98);
-        }
+        .phases { display: flex; justify-content: space-between; margin-bottom: 20px; position: relative; }
+        .phases::before { content: ''; position: absolute; top: 14px; left: 44px; right: 44px; height: 2px; background: var(--border); }
+        .phase { display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 1; }
+        .phase-dot { width: 30px; height: 30px; border-radius: 50%; background: var(--bg); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--muted); transition: all 0.3s; }
+        .phase.active .phase-dot { background: var(--fg); border-color: var(--fg); color: var(--primary-fg); box-shadow: 0 0 0 4px rgba(0,0,0,0.06); }
+        @media (prefers-color-scheme: dark) { .phase.active .phase-dot { box-shadow: 0 0 0 4px rgba(255,255,255,0.06); } }
+        .phase.done .phase-dot { background: var(--success); border-color: var(--success); color: white; }
+        .phase-label { font-size: 11px; font-weight: 500; color: var(--muted); }
+        .phase.active .phase-label { color: var(--fg); font-weight: 600; }
+        .phase.done .phase-label { color: var(--success); }
 
-        button:disabled {
-            background: #999;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
+        .progress-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
+        .progress-fill { height: 100%; background: var(--fg); border-radius: 3px; transition: width 0.3s ease; width: 0%; }
 
-        .format-selector {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .stat { text-align: center; }
+        .stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-bottom: 4px; }
+        .stat-value { font-family: var(--font-display); font-size: 16px; font-weight: 700; }
 
-        .format-option {
-            flex: 1;
-            position: relative;
-        }
+        .paper-info { display: none; margin-top: 16px; padding: 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; animation: fade-in 0.3s ease-out; }
+        .paper-info.active { display: block; }
+        .paper-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
+        .paper-authors { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+        .paper-meta { display: flex; gap: 16px; font-size: 11px; color: var(--muted); }
 
-        .format-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+        .status-bar { display: none; align-items: center; gap: 8px; margin-top: 16px; padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 500; animation: fade-in 0.3s ease-out; }
+        .status-bar.active { display: flex; }
+        .status-bar.loading { background: var(--bg); border: 1px solid var(--border); color: var(--fg); }
+        .status-bar.success { background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.2); color: var(--success); }
+        .status-bar.error { background: rgba(220,38,38,0.08); border: 1px solid rgba(220,38,38,0.2); color: var(--error); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: pulse-ring 1.5s ease-out infinite; }
 
-        .format-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+        .features { margin-top: 64px; padding-top: 48px; border-top: 1px solid var(--border); }
+        .features h2 { font-family: var(--font-display); font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+        .features > p { text-align: center; color: var(--muted); font-size: 15px; margin-bottom: 32px; }
+        .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .feature-card { padding: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; transition: all 0.2s; }
+        .feature-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.04); }
+        .feature-icon { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 12px; }
+        .feature-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .feature-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
 
-        .format-option input[type="radio"]:checked + .format-label {
-            border-color: #6366f1;
-            background: #f5f5ff;
-            color: #6366f1;
-        }
+        .footer { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--border); text-align: center; }
+        .footer-links { display: flex; justify-content: center; gap: 24px; margin-bottom: 16px; }
+        .footer-link { font-size: 13px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+        .footer-link:hover { color: var(--fg); }
+        .footer-copy { font-size: 12px; color: var(--muted); }
 
-        .format-label:hover {
-            border-color: #6366f1;
-        }
-
-        .format-icon {
-            font-size: 16px;
-        }
-
-        /* Progress container */
-        .progress-container {
-            margin-top: 20px;
-            display: none;
-        }
-
-        .progress-container.active {
-            display: block;
-        }
-
-        .progress-bar-bg {
-            width: 100%;
-            height: 8px;
-            background: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 12px;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #6366f1, #8b5cf6);
-            border-radius: 4px;
-            transition: width 0.3s ease;
-            width: 0%;
-        }
-
-        .progress-info {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            font-size: 13px;
-            color: #666;
-        }
-
-        .progress-info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .progress-info-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #999;
-        }
-
-        .progress-info-value {
-            font-weight: 600;
-            color: #1a1a2e;
-        }
-
-        /* Status messages */
-        .status-message {
-            margin-top: 16px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            display: none;
-        }
-
-        .status-message.downloading {
-            background: #e3f2fd;
-            color: #1976d2;
-        }
-
-        .status-message.complete {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .status-message.error {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        /* Animation */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .live-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #6366f1;
-            border-radius: 50%;
-            margin-right: 6px;
-            animation: pulse 1.5s infinite;
-        }
-
-        .info-text {
-            font-size: 12px;
-            color: #999;
-            text-align: center;
-            margin-top: 16px;
-        }
+        @media (max-width: 480px) { .container { padding: 100px 16px 60px; } .quality-grid { grid-template-columns: repeat(2, 1fr); } .feature-grid { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } .nav-links { display: none; } }
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <a href="/" class="nav-logo">
+            <div class="nav-logo-icon">🦐</div>
+            <span class="nav-logo-text">Resource Shrimp</span>
+        </a>
+        <div class="nav-links">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="https://github.com/Reyanda/resource-shrimp" target="_blank" class="nav-link">GitHub</a>
+        </div>
+    </nav>
+
     <div class="container">
-        <h1><span class="h1-icon">🎬</span> Video Downloader</h1>
-        <p class="subtitle">Download videos from 1000+ sites - paste any URL below</p>
+        <section class="hero">
+            <div class="pill-badge"><span class="pill-dot"></span>Free & open source</div>
+            <h1>Download anything.<br>Beautifully.</h1>
+            <p>Videos, music, and academic papers from YouTube, arXiv, DOI, and 1000+ sources.</p>
+        </section>
 
-        <div class="supported-sites" id="supportedSites">
-            <!-- Populated by JS -->
+        <div class="input-card">
+            <div class="input-row">
+                <input type="text" class="url-input" id="urlInput" placeholder="Paste a URL..." autocomplete="off" spellcheck="false">
+                <button class="btn-primary" id="downloadBtn" onclick="startDownload()">
+                    <span class="btn-label">Download</span>
+                    <div class="spinner"></div>
+                </button>
+            </div>
+
+            <div class="type-badge" id="typeBadge">
+                <div class="type-icon" id="typeIcon">🎬</div>
+                <div class="type-info">
+                    <div class="type-label" id="typeLabel">Video</div>
+                    <div class="type-hint" id="typeHint">YouTube, Vimeo, TikTok + 1000 more</div>
+                </div>
+            </div>
+
+            <div class="options" id="optionsPanel">
+                <div id="videoOptions">
+                    <div class="options-label">Quality</div>
+                    <div class="quality-grid">
+                        <div class="quality-card" data-q="2160p" onclick="pickQ(this)"><span class="quality-badge">4K</span><div class="quality-res">2160p</div><div class="quality-desc">Ultra HD</div></div>
+                        <div class="quality-card" data-q="1440p" onclick="pickQ(this)"><span class="quality-badge">2K</span><div class="quality-res">1440p</div><div class="quality-desc">Quad HD</div></div>
+                        <div class="quality-card selected" data-q="1080p" onclick="pickQ(this)"><span class="quality-badge">FHD</span><div class="quality-res">1080p</div><div class="quality-desc">Full HD</div></div>
+                        <div class="quality-card" data-q="720p" onclick="pickQ(this)"><span class="quality-badge">HD</span><div class="quality-res">720p</div><div class="quality-desc">Standard</div></div>
+                        <div class="quality-card" data-q="480p" onclick="pickQ(this)"><div class="quality-res">480p</div><div class="quality-desc">Mobile</div></div>
+                        <div class="quality-card" data-q="360p" onclick="pickQ(this)"><div class="quality-res">360p</div><div class="quality-desc">Light</div></div>
+                    </div>
+                    <div class="options-label">Audio</div>
+                    <div class="audio-toggle">
+                        <button class="audio-toggle-btn active" data-mode="video" onclick="setMode('video')">🎬 Video + Audio</button>
+                        <button class="audio-toggle-btn" data-mode="audio" onclick="setMode('audio')">🎵 Audio Only</button>
+                    </div>
+                    <div class="audio-formats" id="audioFormats">
+                        <div class="audio-chip" data-fmt="mp3" onclick="pickA(this)">MP3 <span style="color:var(--muted);font-size:10px">320k</span></div>
+                        <div class="audio-chip" data-fmt="flac" onclick="pickA(this)">FLAC <span class="lossless-badge">Lossless</span></div>
+                        <div class="audio-chip" data-fmt="wav" onclick="pickA(this)">WAV <span class="lossless-badge">Lossless</span></div>
+                        <div class="audio-chip" data-fmt="opus" onclick="pickA(this)">OPUS <span style="color:var(--muted);font-size:10px">256k</span></div>
+                        <div class="audio-chip" data-fmt="aac" onclick="pickA(this)">AAC <span style="color:var(--muted);font-size:10px">256k</span></div>
+                    </div>
+                    <div class="toggle-row">
+                        <span class="toggle-text">Include subtitles</span>
+                        <div class="toggle" id="subToggle" onclick="togSub()"></div>
+                    </div>
+                </div>
+
+                <div id="articleOptions" style="display:none">
+                    <div class="options-label">Access Method</div>
+                    <div class="access-grid">
+                        <button class="access-btn" onclick="openInst()"><span class="access-icon">🏛️</span><span class="access-text"><span class="access-title">Institution</span><span class="access-desc">University login</span></span></button>
+                        <button class="access-btn" onclick="openR4L()"><span class="access-icon">🌍</span><span class="access-text"><span class="access-title">Research4Life</span><span class="access-desc">Free for developing regions</span></span></button>
+                        <button class="access-btn" onclick="openSH()"><span class="access-icon">📚</span><span class="access-text"><span class="access-title">Sci-Hub</span><span class="access-desc">Open access mirror</span></span></button>
+                        <button class="access-btn" onclick="openOA()"><span class="access-icon">🔓</span><span class="access-text"><span class="access-title">Open Access</span><span class="access-desc">Unpaywall + DOAJ</span></span></button>
+                    </div>
+                    <div class="options-label" style="margin-top:16px">Output</div>
+                    <div class="audio-formats active">
+                        <div class="audio-chip selected" data-fmt="pdf" onclick="pickArt(this)">📄 PDF Paper</div>
+                        <div class="audio-chip" data-fmt="info" onclick="pickArt(this)">ℹ️ Metadata Only</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="input-group">
-            <input
-                type="text"
-                id="urlInput"
-                placeholder="Paste video URL from any site..."
-                autofocus
-            >
-            <button id="downloadBtn" onclick="startDownload()">Download</button>
-        </div>
-
-        <div class="format-selector">
-            <div class="format-option">
-                <input type="radio" name="format" id="formatMp4" value="mp4" checked>
-                <label class="format-label" for="formatMp4">
-                    <span class="format-icon">🎬</span>
-                    MP4 Video
-                </label>
-            </div>
-            <div class="format-option">
-                <input type="radio" name="format" id="formatMp3" value="mp3">
-                <label class="format-label" for="formatMp3">
-                    <span class="format-icon">🎵</span>
-                    MP3 Audio
-                </label>
+        <div class="progress-section" id="progressSection">
+            <div class="progress-card">
+                <div class="phases">
+                    <div class="phase" id="phase1"><div class="phase-dot">1</div><span class="phase-label">Resolve</span></div>
+                    <div class="phase" id="phase2"><div class="phase-dot">2</div><span class="phase-label">Fetch</span></div>
+                    <div class="phase" id="phase3"><div class="phase-dot">3</div><span class="phase-label">Ready</span></div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+                <div class="stats">
+                    <div class="stat"><div class="stat-label">Progress</div><div class="stat-value" id="statProgress">0%</div></div>
+                    <div class="stat"><div class="stat-label">Speed</div><div class="stat-value" id="statSpeed">—</div></div>
+                    <div class="stat"><div class="stat-label">ETA</div><div class="stat-value" id="statEta">—</div></div>
+                    <div class="stat"><div class="stat-label">Status</div><div class="stat-value" id="statStatus">Waiting</div></div>
+                </div>
+                <div class="paper-info" id="paperInfo">
+                    <div class="paper-title" id="paperTitle"></div>
+                    <div class="paper-authors" id="paperAuthors"></div>
+                    <div class="paper-meta"><span id="paperDoi"></span><span id="paperJournal"></span><span id="paperYear"></span></div>
+                </div>
+                <div class="status-bar" id="statusBar"><span class="status-dot"></span><span id="statusMsg">Initializing...</span></div>
             </div>
         </div>
 
-        <!-- Progress Section -->
-        <div class="progress-container" id="progressContainer">
-            <div class="progress-bar-bg">
-                <div class="progress-bar-fill" id="progressBar"></div>
+        <section class="features" id="features">
+            <h2>Everything you need</h2>
+            <p>One tool for all your downloads</p>
+            <div class="feature-grid">
+                <div class="feature-card"><div class="feature-icon">🎬</div><div class="feature-title">1000+ Sites</div><div class="feature-desc">YouTube, Vimeo, TikTok, Twitter, Instagram via yt-dlp.</div></div>
+                <div class="feature-card"><div class="feature-icon">📑</div><div class="feature-title">Academic Papers</div><div class="feature-desc">OpenAlex + Sci-Hub + Research4Life for free access.</div></div>
+                <div class="feature-card"><div class="feature-icon">🎵</div><div class="feature-title">Lossless Audio</div><div class="feature-desc">FLAC, WAV, OPUS — studio quality, not just MP3.</div></div>
+                <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Instant</div><div class="feature-desc">No sign-up. No ads. Paste URL, click download.</div></div>
             </div>
+        </section>
 
-            <div class="progress-info">
-                <div class="progress-info-item">
-                    <span class="progress-info-label">Progress</span>
-                    <span class="progress-info-value" id="progressPercent">0%</span>
-                </div>
-                <div class="progress-info-item">
-                    <span class="progress-info-label">Speed</span>
-                    <span class="progress-info-value" id="progressSpeed">--</span>
-                </div>
-                <div class="progress-info-item">
-                    <span class="progress-info-label">ETA</span>
-                    <span class="progress-info-value" id="progressEta">--</span>
-                </div>
+        <footer class="footer">
+            <div class="footer-links">
+                <a href="https://github.com/Reyanda/resource-shrimp" target="_blank" class="footer-link">GitHub</a>
             </div>
+            <div class="footer-copy">Built by Reyanda. Files never leave your device.</div>
+        </footer>
+    </div>
 
-            <div class="progress-info" style="margin-top: 10px;">
-                <div class="progress-info-item">
-                    <span class="progress-info-label">Downloaded</span>
-                    <span class="progress-info-value" id="progressDownloaded">--</span>
-                </div>
-                <div class="progress-info-item">
-                    <span class="progress-info-label">Total Size</span>
-                    <span class="progress-info-value" id="progressSize">--</span>
-                </div>
-                <div class="progress-info-item">
-                    <span class="progress-info-label">Status</span>
-                    <span class="progress-info-value" id="progressStatus"><span class="live-indicator"></span>Starting</span>
+    <!-- Institution Modal -->
+    <div class="modal-overlay" id="instModal" onclick="if(event.target===this)this.classList.remove('active')" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;max-height:80vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);">
+                <span style="font-family:var(--font-display);font-size:18px;font-weight:700;">Sign in via Institution</span>
+                <button onclick="document.getElementById('instModal').classList.remove('active')" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--bg);cursor:pointer;font-size:18px;">×</button>
+            </div>
+            <div style="padding:20px;overflow-y:auto;max-height:calc(80vh - 140px);">
+                <input type="text" placeholder="Search your university..." style="width:100%;padding:12px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;font-size:14px;font-family:var(--font-body);color:var(--fg);margin-bottom:16px;" oninput="filterInst(this.value)" id="instSearch">
+                <div id="instList"></div>
+                <div style="margin-top:16px;padding:16px;background:var(--bg);border-radius:12px;border:1px solid var(--border);font-size:12px;color:var(--muted);line-height:1.6;">
+                    <strong>Don't see your institution?</strong><br>Many publishers support OpenAthens or Shibboleth. Click "Institutional Login" on the publisher's site.
                 </div>
             </div>
-
-            <div class="status-message" id="statusMessage"></div>
         </div>
+    </div>
 
-        <p class="info-text">Files download directly to your device — nothing stored on the server.</p>
+    <!-- Research4Life Modal -->
+    <div class="modal-overlay" id="r4lModal" onclick="if(event.target===this)this.classList.remove('active')" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;padding:20px;">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);">
+                <span style="font-family:var(--font-display);font-size:18px;font-weight:700;">Research4Life</span>
+                <button onclick="document.getElementById('r4lModal').classList.remove('active')" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--bg);cursor:pointer;font-size:18px;">×</button>
+            </div>
+            <div style="padding:20px;">
+                <div style="padding:20px;background:linear-gradient(135deg,rgba(22,163,74,0.05),rgba(59,130,246,0.05));border:1px solid rgba(22,163,74,0.2);border-radius:12px;margin-bottom:16px;">
+                    <div style="font-size:16px;font-weight:700;margin-bottom:8px;">🌍 Free Access for Developing Countries</div>
+                    <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:12px;">Research4Life provides free access for researchers in the world's poorest countries. Includes HINARI, AGORA, OARE, GOALI, ARDI.</div>
+                    <div style="font-size:12px;color:var(--success);font-weight:500;">Eligible: Sub-Saharan Africa, South Asia, Southeast Asia, Latin America, Caribbean, Oceania</div>
+                </div>
+                <button onclick="window.open('https://login.research4life.org/','_blank');document.getElementById('r4lModal').classList.remove('active')" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--success);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);">🌍 Open Research4Life Login</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        let pollInterval = null;
+        let type='video', quality='1080p', audioFmt=null, audioMode='video', subs=false, artFmt='pdf', poll=null;
+        const input=document.getElementById('urlInput');
+        let debounce;
 
-        async function loadSupportedSites() {
-            try {
-                const res = await fetch('/supported-sites');
-                const sites = await res.json();
-                const container = document.getElementById('supportedSites');
-                container.innerHTML = sites.map(s =>
-                    `<span class="site-tag"><span class="icon">${s.icon}</span>${s.name}</span>`
-                ).join('');
-            } catch (err) {
-                console.error('Failed to load supported sites', err);
+        input.addEventListener('input',()=>{clearTimeout(debounce);const u=input.value.trim();u.length>8?debounce=setTimeout(()=>det(u),300):hideType()});
+        input.addEventListener('keydown',e=>{if(e.key==='Enter')startDownload()});
+
+        function det(u){
+            u=u.toLowerCase();
+            if(/^10\.\d{4,}/.test(u)||/doi\.org\/10\./.test(u))return showT('doi','📄','Academic Paper (DOI)','DOI resolution');
+            if(u.includes('arxiv.org'))return showT('arxiv','📑','arXiv Paper','Preprint');
+            if(u.includes('pubmed')||u.includes('ncbi.nlm.nih.gov'))return showT('pubmed','🏥','PubMed','Medical literature');
+            if(/springer|wiley|sciencedirect|nature\.com|science\.org|ieee|acm/.test(u))return showT('academic','📚','Academic Article','Journal article');
+            showT('video','🎬','Video','YouTube, Vimeo, TikTok + 1000 more');
+        }
+
+        function showT(t,icon,label,hint){
+            type=t;document.getElementById('typeIcon').textContent=icon;
+            document.getElementById('typeLabel').textContent=label;
+            document.getElementById('typeHint').textContent=hint;
+            document.getElementById('typeBadge').classList.add('active');
+            document.getElementById('optionsPanel').classList.add('active');
+            document.getElementById('videoOptions').style.display=t==='video'?'block':'none';
+            document.getElementById('articleOptions').style.display=t!=='video'?'block':'none';
+        }
+
+        function hideType(){document.getElementById('typeBadge').classList.remove('active');document.getElementById('optionsPanel').classList.remove('active');type='video'}
+
+        function pickQ(el){document.querySelectorAll('.quality-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');quality=el.dataset.q}
+        function setMode(m){audioMode=m;document.querySelectorAll('.audio-toggle-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));document.getElementById('audioFormats').classList.toggle('active',m==='audio');document.querySelectorAll('.quality-card').forEach(c=>c.style.opacity=m==='audio'?'0.4':'1');if(m==='audio'){quality='audio';document.querySelectorAll('.quality-card').forEach(c=>c.classList.remove('selected'))}else{const d=document.querySelector('.quality-card[data-q="1080p"]');if(d){d.classList.add('selected');quality='1080p'}}}
+        function pickA(el){document.querySelectorAll('.audio-chip[data-fmt]').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');audioFmt=el.dataset.fmt}
+        function pickArt(el){document.querySelectorAll('#articleOptions .audio-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');artFmt=el.dataset.fmt}
+        function togSub(){subs=!subs;document.getElementById('subToggle').classList.toggle('active',subs)}
+
+        async function startDownload(){
+            const url=input.value.trim();if(!url)return;
+            const btn=document.getElementById('downloadBtn');
+            btn.classList.add('loading');btn.disabled=true;
+            document.getElementById('progressSection').classList.add('active');
+            resetProg();showSt('loading','Resolving...');
+
+            try{
+                const res=await fetch('/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url,type:type==='video'?'auto':type,quality,format:audioMode==='audio'?(audioFmt||'mp3'):'mp4',subtitles:subs})});
+                const d=await res.json();
+                if(d.error)throw new Error(d.error);
+                pollSt(d.download_id,d.type);
+            }catch(e){
+                const msg=typeof e==='string'?e:e?.message||JSON.stringify(e)||'Failed';
+                showSt('error',msg);
             }
+            btn.classList.remove('loading');btn.disabled=false;
         }
 
-        async function startDownload() {
-            const url = document.getElementById('urlInput').value.trim();
-            const format = document.querySelector('input[name="format"]:checked').value;
-            if (!url) return;
+        function pollSt(id,dlType){
+            poll=setInterval(async()=>{
+                try{
+                    const r=await fetch(`/status/${id}`);const d=await r.json();
+                    if(d.status==='error'){clearInterval(poll);showSt('error',d.message||d.error)}
+                    else if(d.status==='complete'){clearInterval(poll);updProg(d);setPh('ready');showSt('success','Ready — downloading');triggerDl(id)}
+                    else{updProg(d);setPh(d.phase||d.status)}
+                }catch{clearInterval(poll);showSt('error','Connection lost')}
+            },400);
+        }
 
-            const btn = document.getElementById('downloadBtn');
-            const progressContainer = document.getElementById('progressContainer');
+        function updProg(d){
+            const p=d.progress||'0';
+            document.getElementById('progressFill').style.width=p+'%';
+            document.getElementById('statProgress').textContent=p+'%';
+            document.getElementById('statSpeed').textContent=d.speed||'—';
+            document.getElementById('statEta').textContent=d.eta||'—';
+            const l={starting:'Init',downloading:'Download',fetching:'Fetch',processing:'Process',encoding:'Encode',complete:'Done'};
+            document.getElementById('statStatus').textContent=l[d.status]||d.status;
 
-            btn.disabled = true;
-            progressContainer.classList.add('active');
-            resetProgress();
-
-            try {
-                const res = await fetch('/download', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url, format })
-                });
-
-                const data = await res.json();
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
-                pollStatus(data.download_id);
-
-            } catch (err) {
-                showStatus('error', 'Error: ' + err.message);
-                btn.disabled = false;
+            if(d.type==='article'&&d.title){
+                document.getElementById('paperInfo').classList.add('active');
+                document.getElementById('paperTitle').textContent=d.title;
+                document.getElementById('paperAuthors').textContent=(d.authors||[]).join(', ');
+                document.getElementById('paperDoi').textContent=d.doi||'';
+                document.getElementById('paperJournal').textContent=d.journal||'';
+                document.getElementById('paperYear').textContent=d.year||'';
             }
+
+            const st=d.status==='complete'?'success':(d.status==='processing'||d.status==='encoding')?'loading':'loading';
+            showSt(st,d.message||'Working...');
         }
 
-        async function pollStatus(downloadId) {
-            const btn = document.getElementById('downloadBtn');
-
-            pollInterval = setInterval(async () => {
-                try {
-                    const res = await fetch(`/status/${downloadId}`);
-                    const data = await res.json();
-
-                    if (data.status === 'downloading' || data.status === 'processing') {
-                        updateProgress(data);
-                    } else if (data.status === 'complete') {
-                        clearInterval(pollInterval);
-                        updateProgress(data);
-                        showStatus('complete', '✓ Download starting to your device!');
-                        btn.disabled = false;
-                        document.getElementById('urlInput').value = '';
-
-                        // Trigger browser download
-                        triggerDownload(downloadId);
-                    } else if (data.status === 'error') {
-                        clearInterval(pollInterval);
-                        showStatus('error', 'Error: ' + data.error);
-                        btn.disabled = false;
-                    }
-
-                } catch (err) {
-                    clearInterval(pollInterval);
-                    showStatus('error', 'Error checking status');
-                    btn.disabled = false;
-                }
-            }, 500);
+        function setPh(p){
+            ['phase1','phase2','phase3'].forEach(id=>document.getElementById(id).className='phase');
+            if(['init','starting','downloading','fetching'].includes(p))document.getElementById('phase1').classList.add('active');
+            else if(['processing','encoding'].includes(p)){document.getElementById('phase1').classList.add('done');document.getElementById('phase2').classList.add('active')}
+            else if(['ready','complete'].includes(p)){document.getElementById('phase1').classList.add('done');document.getElementById('phase2').classList.add('done');document.getElementById('phase3').classList.add('active')}
         }
 
-        function triggerDownload(downloadId) {
-            const a = document.createElement('a');
-            a.href = `/stream/${downloadId}`;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => a.remove(), 1000);
-        }
+        function resetProg(){document.getElementById('progressFill').style.width='0%';document.getElementById('statProgress').textContent='0%';document.getElementById('statSpeed').textContent='—';document.getElementById('statEta').textContent='—';document.getElementById('statStatus').textContent='Waiting';document.getElementById('paperInfo').classList.remove('active');document.getElementById('statusBar').classList.remove('active');['phase1','phase2','phase3'].forEach(id=>document.getElementById(id).className='phase')}
 
-        function updateProgress(data) {
-            const progress = data.progress || '0';
-            document.getElementById('progressBar').style.width = progress + '%';
-            document.getElementById('progressPercent').textContent = progress + '%';
-            document.getElementById('progressSpeed').textContent = data.speed || '--';
-            document.getElementById('progressEta').textContent = data.eta || '--';
-            document.getElementById('progressDownloaded').textContent = data.downloaded || '--';
-            document.getElementById('progressSize').textContent = data.size || '--';
+        function showSt(t,msg){const b=document.getElementById('statusBar');b.className='status-bar active '+t;document.getElementById('statusMsg').textContent=msg}
 
-            const statusEl = document.getElementById('progressStatus');
-            if (data.status === 'downloading') {
-                statusEl.innerHTML = '<span class="live-indicator"></span>Downloading';
-            } else if (data.status === 'processing') {
-                statusEl.innerHTML = '<span class="live-indicator"></span>Processing';
-            } else if (data.status === 'complete') {
-                statusEl.textContent = 'Complete';
-            }
-        }
+        function triggerDl(id){const a=document.createElement('a');a.href=`/stream/${id}`;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),1000)}
 
-        function resetProgress() {
-            document.getElementById('progressBar').style.width = '0%';
-            document.getElementById('progressPercent').textContent = '0%';
-            document.getElementById('progressSpeed').textContent = '--';
-            document.getElementById('progressEta').textContent = '--';
-            document.getElementById('progressDownloaded').textContent = '--';
-            document.getElementById('progressSize').textContent = '--';
-            document.getElementById('progressStatus').innerHTML = '<span class="live-indicator"></span>Starting';
-            document.getElementById('statusMessage').style.display = 'none';
-        }
-
-        function showStatus(type, message) {
-            const statusEl = document.getElementById('statusMessage');
-            statusEl.className = 'status-message ' + type;
-            statusEl.textContent = message;
-            statusEl.style.display = 'block';
-        }
-
-        // Allow Enter key to start download
-        document.getElementById('urlInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') startDownload();
-        });
-
-        // Initialize
-        loadSupportedSites();
+        // Institution
+        const insts=[
+            {n:'MIT',r:'USA'},{n:'Harvard',r:'USA'},{n:'Stanford',r:'USA'},{n:'Oxford',r:'UK'},
+            {n:'Cambridge',r:'UK'},{n:'ETH Zurich',r:'Switzerland'},{n:'U of Tokyo',r:'Japan'},
+            {n:'NUS',r:'Singapore'},{n:'U of Cape Town',r:'South Africa'},{n:'U of Nairobi',r:'Kenya'},
+            {n:'Makerere',r:'Uganda'},{n:'U of Ghana',r:'Ghana'},{n:'U of Malaya',r:'Malaysia'},
+            {n:'U of São Paulo',r:'Brazil'},{n:'IISc',r:'India'},{n:'Tsinghua',r:'China'},
+            {n:'Seoul National',r:'South Korea'},{n:'U of Buenos Aires',r:'Argentina'},
+        ];
+        function openInst(){document.getElementById('instModal').style.display='flex';filterInst('')}
+        function filterInst(q){document.getElementById('instList').innerHTML=insts.filter(i=>i.n.toLowerCase().includes(q.toLowerCase())||i.r.toLowerCase().includes(q.toLowerCase())).map(i=>`<div onclick="window.open('https://login.research4life.org/','_blank');document.getElementById('instModal').style.display='none'" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;cursor:pointer;transition:all 0.2s;border:1px solid transparent;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'"><div style="width:36px;height:36px;border-radius:8px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;">🏛️</div><div><div style="font-size:14px;font-weight:500;">${i.n}</div><div style="font-size:12px;color:var(--muted);">${i.r}</div></div></div>`).join('')}
+        function openR4L(){document.getElementById('r4lModal').style.display='flex'}
+        function openSH(){const u=input.value.trim();const m=u.match(/10\.\d{4,}\/[^\s&?]+/);window.open(m?`https://sci-hub.su/${m[0]}`:'https://sci-hub.su','_blank')}
+        function openOA(){const u=input.value.trim();const m=u.match(/10\.\d{4,}\/[^\s&?]+/);window.open(m?`https://api.unpaywall.org/v2/${m[0]}?email=dl@rs.app`:'https://unpaywall.org','_blank')}
     </script>
 </body>
 </html>
