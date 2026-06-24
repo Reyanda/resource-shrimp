@@ -302,6 +302,15 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--fg); m
 .sr-label { flex-shrink: 0; width: 150px; padding: 11px 12px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-family: var(--font-body); color: var(--fg); }
 .sr-terms { flex: 1; padding: 11px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-family: var(--font-body); color: var(--fg); }
 .sr-terms:focus, .sr-label:focus { outline: none; border-color: var(--border-strong); }
+/* Tag/pill input */
+.sr-tags { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 7px 10px; background: var(--card); border: 1px solid var(--border); border-radius: 10px; min-height: 44px; cursor: text; }
+.sr-tags:focus-within { border-color: var(--border-strong); }
+.sr-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 4px 4px 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 13px; white-space: nowrap; }
+.sr-tag-x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; line-height: 1; padding: 0 3px; }
+.sr-tag-x:hover { color: var(--error); }
+.sr-tag-input { flex: 1; min-width: 90px; border: none; background: none; outline: none; font-size: 14px; font-family: var(--font-body); color: var(--fg); padding: 4px 0; }
+.sr-exclude .sr-tag { border-color: rgba(220,38,38,0.35); }
+.sr-exclude .sr-tag-x:hover { color: var(--error); }
 .sr-rm { flex-shrink: 0; width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
 .sr-rm:hover { color: var(--error); border-color: var(--error); }
 .sr-exclude { margin-top: 10px; }

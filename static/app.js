@@ -122,7 +122,7 @@
     function hideViews(){document.getElementById('libraryView').style.display='none';var rv=document.getElementById('reviewView');if(rv)rv.style.display='none'}
     window.showLibrary=function(){mainEls().forEach(function(e){if(e)e.style.display='none'});hideViews();document.getElementById('libraryView').style.display='block';window.scrollTo(0,0);loadDrive();loadProjects();loadLibrary('')};
     window.showMain=function(){hideViews();mainEls().forEach(function(e){if(e&&e.id!=='progressSection')e.style.display=''})};
-    window.showReview=function(){mainEls().forEach(function(e){if(e)e.style.display='none'});hideViews();document.getElementById('reviewView').style.display='block';window.scrollTo(0,0);if(!document.querySelectorAll('#srConcepts .sr-concept').length){addConcept('Population / Phenomenon');addConcept('Intervention / Input');addConcept('Measure / Outcome')}};
+    window.showReview=function(){mainEls().forEach(function(e){if(e)e.style.display='none'});hideViews();document.getElementById('reviewView').style.display='block';window.scrollTo(0,0);if(!document.querySelectorAll('#srConcepts .sr-concept').length){addConcept('Population / Phenomenon');addConcept('Intervention / Input');addConcept('Measure / Outcome')}var ew=document.getElementById('srExcludeWrap');if(ew&&!ew.querySelector('.sr-tags')){var c=tagsContainer([],'Exclude (NOT) — noise terms, press Enter');c.id='srExclude';ew.appendChild(c)}};
 
     function refreshLibIfOpen(){if(document.getElementById('libraryView').style.display==='block'){var s=document.getElementById('libSearch');loadLibrary(s?s.value.trim():'')}}
 
@@ -394,22 +394,56 @@
     // ── Systematic review: search-strategy builder ───────────────────
     var SR_LABELS=['Population / Phenomenon','Realm / Domain','Intervention / Input','Standard / Comparator','Measure / Outcome','Time / Temporal','Geography / Setting','Design / Methodology'];
     var lastStrategy=null, lastResults=[];
+    // ── Pill / tag input ─────────────────────────────────────────────
+    function createTag(container,text){
+        text=String(text).trim(); if(!text)return;
+        var input=container.querySelector('.sr-tag-input');
+        var tag=document.createElement('span'); tag.className='sr-tag'; tag.setAttribute('data-term',text);
+        tag.appendChild(document.createTextNode(text));
+        var x=document.createElement('button'); x.className='sr-tag-x'; x.type='button'; x.textContent='×';
+        x.onclick=function(){tag.remove()};
+        tag.appendChild(x); container.insertBefore(tag,input);
+    }
+    function readTags(container){
+        var terms=Array.prototype.map.call(container.querySelectorAll('.sr-tag'),function(t){return t.getAttribute('data-term')}).filter(Boolean);
+        var pend=container.querySelector('.sr-tag-input').value.trim(); if(pend)terms.push(pend);
+        return terms;
+    }
+    function wireTags(container){
+        var input=container.querySelector('.sr-tag-input');
+        container.addEventListener('mousedown',function(e){if(e.target===container)input.focus()});
+        input.addEventListener('keydown',function(e){
+            if(e.key==='Enter'||e.key===','){e.preventDefault();createTag(container,input.value);input.value=''}
+            else if(e.key==='Backspace'&&!input.value){var t=container.querySelectorAll('.sr-tag');if(t.length)t[t.length-1].remove()}
+        });
+        input.addEventListener('blur',function(){if(input.value.trim()){createTag(container,input.value);input.value=''}});
+        input.addEventListener('paste',function(){setTimeout(function(){if(input.value.indexOf(',')>-1){input.value.split(',').forEach(function(t){createTag(container,t)});input.value=''}},0)});
+    }
+    function tagsContainer(initial,placeholder){
+        var c=document.createElement('div'); c.className='sr-tags';
+        var inp=document.createElement('input'); inp.className='sr-tag-input'; inp.placeholder=placeholder||'type a term, press Enter';
+        c.appendChild(inp); wireTags(c);
+        (Array.isArray(initial)?initial:(initial?String(initial).split(','):[])).forEach(function(t){createTag(c,t)});
+        return c;
+    }
+
     window.addConcept=function(label,terms){
         var wrap=document.getElementById('srConcepts');
         var row=document.createElement('div');row.className='sr-concept';
-        var opts=SR_LABELS.map(function(l){return '<option'+(l===label?' selected':'')+'>'+l+'</option>'}).join('');
-        row.innerHTML='<select class="sr-label">'+opts+'</select>'+
-            '<input class="sr-terms" placeholder="terms, comma-separated (e.g. malnutrition, wasting)" value="'+esc(terms||'')+'">'+
-            '<button class="sr-rm" title="Remove">×</button>';
-        row.querySelector('.sr-rm').onclick=function(){row.remove()};
+        var sel=document.createElement('select');sel.className='sr-label';
+        sel.innerHTML=SR_LABELS.map(function(l){return '<option'+(l===label?' selected':'')+'>'+l+'</option>'}).join('');
+        var rm=document.createElement('button');rm.className='sr-rm';rm.type='button';rm.title='Remove';rm.textContent='×';
+        rm.onclick=function(){row.remove()};
+        row.appendChild(sel);
+        row.appendChild(tagsContainer(terms,'exposures, locations… type each, press Enter'));
+        row.appendChild(rm);
         wrap.appendChild(row);
     };
     function collectConcepts(){
         var out=[];
         Array.prototype.forEach.call(document.querySelectorAll('#srConcepts .sr-concept'),function(r){
-            var label=r.querySelector('.sr-label').value;
-            var terms=r.querySelector('.sr-terms').value.split(',').map(function(t){return t.trim()}).filter(Boolean);
-            if(terms.length)out.push({label:label,terms:terms});
+            var terms=readTags(r.querySelector('.sr-tags'));
+            if(terms.length)out.push({label:r.querySelector('.sr-label').value,terms:terms});
         });
         return out;
     }
@@ -424,7 +458,7 @@
             if(d.error){srMsg(d.error,'err');return}srMsg('');renderStrategy(d)})
         .catch(function(){if(btn){btn.disabled=false;btn.textContent=btn.dataset.t}srMsg('Request failed.','err')});
     }
-    function collectExclude(){var e=document.getElementById('srExclude');return e?e.value.split(',').map(function(t){return t.trim()}).filter(Boolean):[]}
+    function collectExclude(){var c=document.getElementById('srExclude');return c?readTags(c):[]}
     window.buildStrategy=function(){var c=collectConcepts();if(!c.length){srMsg('Add at least one facet with terms.','err');return}postStrategy({concepts:c,exclude:collectExclude()},document.getElementById('srBuildBtn'))};
     window.buildFromQuestion=function(e){var q=document.getElementById('srQuestion').value.trim();if(!q){srMsg('Type a question first.','err');return}postStrategy({question:q})};
     function renderStrategy(d){
