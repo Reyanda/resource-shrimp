@@ -116,8 +116,8 @@ class Vault:
         if not self.is_unlocked():
             raise RuntimeError("Vault locked")
         provider = provider.lower().strip()
-        if provider not in ('openai', 'anthropic', 'google', 'groq',
-                            'openrouter', 'deepseek', 'custom'):
+        if provider not in ('openai', 'anthropic', 'google', 'groq', 'openrouter',
+                            'deepseek', 'glm', 'kimi', 'custom'):
             raise ValueError(f"Unknown provider: {provider}")
         entry = {
             'key': self._encrypt(api_key),

@@ -204,10 +204,11 @@
                 <div class="set-section">
                     <div class="set-label">Default AI provider</div>
                     <div class="set-row">
-                        <select id="setProvider" class="ask-select"></select>
-                        <input id="setModel" class="ask-keyinput" placeholder="Default model (optional)" autocomplete="off">
+                        <select id="setProvider" class="ask-select" onchange="window.detectDefaultModels()"></select>
+                        <input id="setModel" class="ask-keyinput" list="modelHints" placeholder="Default model (auto-detected)" autocomplete="off">
                     </div>
                     <button class="drive-btn" onclick="window.saveSettings()">Save defaults</button>
+                    <datalist id="modelHints"></datalist>
                 </div>
                 <div class="set-section">
                     <div class="set-label">Connected providers</div>
@@ -218,10 +219,13 @@
                     <div class="prov-tiles" id="addProviderTiles"></div>
                     <div class="set-grid">
                         <input id="addKey" class="ask-keyinput" type="password" placeholder="API key" autocomplete="off">
-                        <input id="addModel" class="ask-keyinput" placeholder="Model (optional)" autocomplete="off">
+                        <input id="addModel" class="ask-keyinput" list="modelHints" placeholder="Model (optional — or Detect)" autocomplete="off">
                         <input id="addBase" class="ask-keyinput" placeholder="Base URL (custom only)" autocomplete="off" style="display:none">
                     </div>
-                    <button class="drive-btn" onclick="window.connectProvider()">Connect</button>
+                    <div class="set-btn-row">
+                        <button class="drive-btn ghost" onclick="window.detectModels()">Detect models</button>
+                        <button class="drive-btn" onclick="window.connectProvider()">Connect</button>
+                    </div>
                     <div id="addMsg" class="set-msg"></div>
                 </div>
                 <div class="set-section">

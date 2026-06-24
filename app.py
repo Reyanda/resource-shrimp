@@ -834,7 +834,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 'providers': providers_avail,        # ready now via env / local
                 'connected': connected,              # user-added, key masked
                 'settings': settings,
-                'catalog': ['openai', 'anthropic', 'groq', 'openrouter', 'deepseek', 'custom', 'ollama'],
+                'catalog': ['openai', 'anthropic', 'groq', 'openrouter', 'deepseek', 'glm', 'kimi', 'custom', 'ollama'],
                 'ready': bool(providers_avail) or bool(connected),
             })
             return
@@ -1324,7 +1324,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             key = (data.get('key') or '').strip()
             base_url = (data.get('base_url') or '').strip() or None
             model = (data.get('model') or '').strip() or None
-            if not sid or provider not in {'openai', 'anthropic', 'groq', 'openrouter', 'deepseek', 'custom'}:
+            if not sid or provider not in {'openai', 'anthropic', 'groq', 'openrouter', 'deepseek', 'glm', 'kimi', 'custom'}:
                 self.send_json({'error': 'Unsupported provider'}, 400)
                 return
             if not key:
@@ -1365,6 +1365,29 @@ class Handler(http.server.BaseHTTPRequestHandler):
             model = (data.get('default_model') or '').strip() or None
             library.set_settings(sid, provider, model)
             self.send_json({'ok': True})
+            return
+
+        if path == '/api/ai/models':
+            data = self.read_json_body()
+            if data is None:
+                return
+            sid = get_session(self)
+            provider = data.get('provider')
+            if not provider or provider not in ai.PROVIDERS:
+                self.send_json({'error': 'Unknown provider'}, 400)
+                return
+            key = data.get('key') or None
+            base_url = data.get('base_url') or None
+            if (not key) and sid:  # fall back to the stored credential
+                cred = library.get_credential(sid, provider)
+                if cred:
+                    key = cred.get('api_key')
+                    base_url = base_url or cred.get('base_url')
+            try:
+                models = ai.list_models(provider, key=key, base_url=base_url)
+                self.send_json({'models': models})
+            except Exception as e:
+                self.send_json({'error': str(e)}, 502)
             return
 
         if path == '/api/access':
@@ -1416,7 +1439,7 @@ class Handler(http.server.BaseHTTPRequestHandler):
             provider = (data.get('provider') or '').strip().lower()
             key = (data.get('key') or '').strip()
             label = (data.get('label') or '').strip() or None
-            if not provider or provider not in ('openai', 'anthropic', 'groq', 'openrouter', 'deepseek', 'custom'):
+            if not provider or provider not in ('openai', 'anthropic', 'groq', 'openrouter', 'deepseek', 'glm', 'kimi', 'custom'):
                 self.send_json({'error': 'Unsupported provider'}, 400)
                 return
             if not key:

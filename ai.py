@@ -50,6 +50,18 @@ PROVIDERS = {
         "default_model": "deepseek-chat",
         "type": "openai",
     },
+    "glm": {                     # Zhipu AI / Z.ai — OpenAI-compatible
+        "base": "https://api.z.ai/api/paas/v4",
+        "key_env": "GLM_API_KEY",
+        "default_model": "glm-4.6",
+        "type": "openai",
+    },
+    "kimi": {                    # Moonshot AI (Kimi) — OpenAI-compatible
+        "base": "https://api.moonshot.ai/v1",
+        "key_env": "MOONSHOT_API_KEY",
+        "default_model": "moonshot-v1-8k",
+        "type": "openai",
+    },
     "ollama": {
         "base": os.environ.get("OLLAMA_BASE", "http://localhost:11434"),
         "key_env": None,
@@ -64,7 +76,7 @@ PROVIDERS = {
     },
 }
 # Preference order when the caller doesn't name a provider
-PREFERENCE = ["groq", "openrouter", "openai", "anthropic", "deepseek", "ollama"]
+PREFERENCE = ["groq", "openrouter", "openai", "anthropic", "deepseek", "glm", "kimi", "ollama"]
 
 MAX_CONTEXT_CHARS = 48000
 
@@ -94,6 +106,35 @@ def available():
         elif _env_key(name):
             out.append({"provider": name, "model": PROVIDERS[name]["default_model"],
                         "byok": False})
+    return out
+
+
+def list_models(provider, key=None, base_url=None):
+    """Auto-detect available models for a provider. OpenAI-compatible providers
+    expose GET /models; Anthropic GET /v1/models; Ollama GET /api/tags."""
+    cfg = PROVIDERS.get(provider)
+    if not cfg:
+        raise RuntimeError(f"Unknown provider: {provider}")
+    base = (base_url or cfg["base"]).rstrip("/")
+    ptype = cfg["type"]
+    if ptype == "ollama":
+        return _ollama_models()
+    api_key = key or _env_key(provider)
+    if not api_key:
+        raise RuntimeError(f"{provider} requires an API key to list models")
+    if ptype == "anthropic":
+        req = Request(base + "/v1/models",
+                      headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"})
+    else:
+        req = Request(base + "/models", headers={"Authorization": f"Bearer {api_key}"})
+    with urlopen(req, timeout=20) as r:
+        data = json.loads(r.read())
+    items = data.get("data") or data.get("models") or []
+    out = []
+    for it in items:
+        mid = it.get("id") or it.get("name") if isinstance(it, dict) else it
+        if mid:
+            out.append(mid)
     return out
 
 
