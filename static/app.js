@@ -99,6 +99,17 @@
         det(url);
         var btn=document.getElementById('downloadBtn');
         btn.classList.add('loading');btn.disabled=true;
+
+        if(type==='conversation'){
+            fetch(API_BASE+'/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:url,type:'conversation'})})
+            .then(function(r){return r.json()}).then(function(d){
+                if(d.error){alert(d.error);return}
+                pollConv(d.download_id);
+            }).catch(function(e){alert(e.message||'Failed')})
+            .finally(function(){btn.classList.remove('loading');btn.disabled=false});
+            return;
+        }
+
         document.getElementById('progressSection').classList.add('active');
         resetProg();showSt('loading','Resolving...');
 
@@ -108,6 +119,28 @@
         .catch(function(e){showSt('error',e.message||'Failed')})
         .finally(function(){btn.classList.remove('loading');btn.disabled=false});
     };
+
+    function pollConv(id){
+        var tries=0;
+        var iv=setInterval(function(){
+            tries++;
+            fetch(API_BASE+'/api/status/'+encodeURIComponent(id))
+            .then(function(r){return r.json()})
+            .then(function(d){
+                if(d.status==='done'||d.status==='ready'){
+                    clearInterval(iv);
+                    input.value='';
+                    hideType();
+                    showMain();
+                    loadProjects().then(function(){loadLibrary('')});
+                    window.showLibrary();
+                }else if(d.status==='error'||tries>60){
+                    clearInterval(iv);
+                    alert(d.message||d.error||'Conversation save failed');
+                }
+            }).catch(function(){});
+        },1000);
+    }
 
     function pollSt(id,dlType){
         var misses=0;
@@ -157,7 +190,7 @@
 
     function showSt(t,msg){var b=document.getElementById('statusBar');b.className='status-bar active '+t;document.getElementById('statusMsg').textContent=msg}
 
-    function triggerDl(id){var a=document.createElement('a');a.href='/api/stream/'+encodeURIComponent(id);a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},1000)}
+    function triggerDl(id){var a=document.createElement('a');a.href=API_BASE+'/api/stream/'+encodeURIComponent(id);a.style.display='none';document.body.appendChild(a);a.click();setTimeout(function(){a.remove()},1000)}
 
     // ── Library ──────────────────────────────────────────────────────
     var TYPE_ICON={video:UI_ICONS.video,article:UI_ICONS.doc,conversation:UI_ICONS.chat};
@@ -200,7 +233,7 @@
                 projMoveSelect(it)+
                 (it.type==='video'&&it.filename&&!it.has_text?('<button class="lib-btn lib-transcribe" data-id="'+esc(it.id)+'">Transcribe</button>'):'')+
                 (it.filename?('<button class="lib-btn lib-ask" data-id="'+esc(it.id)+'" data-title="'+esc(it.title||it.filename||'')+'">Ask</button>'):'')+
-                (it.filename?('<a class="lib-btn" href="/api/stream/'+encodeURIComponent(it.id)+'">Download</a>'):'')+
+                (it.filename?('<a class="lib-btn" href="'+API_BASE+'/api/stream/'+encodeURIComponent(it.id)+'">Download</a>'):'')+
                 (it.filename&&drive.connected?('<button class="lib-btn lib-drive" data-id="'+esc(it.id)+'">Drive</button>'):'')+
                 '<button class="lib-btn lib-del" data-id="'+esc(it.id)+'">Delete</button>'+
                 '</div></div>';
