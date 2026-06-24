@@ -25,14 +25,32 @@ body { font-family: var(--font-body); background: var(--bg); color: var(--fg); m
 @keyframes pulse-ring { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.navbar { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 10px; padding: 10px 20px; background: rgba(255,255,255,0.8); backdrop-filter: blur(20px) saturate(180%); border: 1px solid var(--border); border-radius: 100px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-@media (prefers-color-scheme: dark) { .navbar { background: rgba(28,28,30,0.72); box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 14px 42px -18px rgba(0,0,0,0.6); } }
+/* OCS-style TopBar: full-width glass navigation header */
+.navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 22px; height: 60px; background: rgba(255,255,255,0.72); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border-bottom: 1px solid var(--border); }
+@media (prefers-color-scheme: dark) { .navbar { background: rgba(20,24,33,0.72); border-bottom-color: rgba(255,255,255,0.08); } }
+.nav-left, .nav-right { display: flex; align-items: center; gap: 10px; }
+.nav-divider { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
 .nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--fg); }
 .nav-logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, #ff7a60 0%, #e0245e 100%); border-radius: 22%; display: flex; align-items: center; justify-content: center; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.15), 0 1px 2px rgba(0,0,0,0.1), inset 0 1px 0.5px rgba(255,255,255,0.3); }
 .nav-logo-text { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
-.nav-links { display: flex; align-items: center; gap: 4px; margin-left: 16px; }
+.nav-links { display: flex; align-items: center; gap: 4px; }
 .nav-link { padding: 6px 12px; font-size: 13px; color: var(--muted); text-decoration: none; border-radius: 100px; transition: all 0.2s; }
 .nav-link:hover { color: var(--fg); background: var(--border); }
+/* Account menu (OCS pattern: settings + logout live here) */
+.nav-account-wrap { position: relative; }
+.nav-account { display: flex; align-items: center; gap: 8px; padding: 6px 10px 6px 6px; border-radius: 100px; background: var(--card); border: 1px solid var(--border); color: var(--fg); font-family: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: border-color 0.2s; }
+.nav-account:hover { border-color: var(--border-strong); }
+.nav-account-avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #ff7a60 0%, #e0245e 100%); flex: none; box-shadow: inset 0 1px 0.5px rgba(255,255,255,0.3); }
+.nav-account-name { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-account-chev { width: 14px; height: 14px; color: var(--muted); }
+.nav-account-menu { display: none; position: absolute; top: 46px; right: 0; min-width: 230px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 14px 42px -18px rgba(0,0,0,0.55), 0 6px 16px -6px rgba(0,0,0,0.18); padding: 8px; z-index: 200; }
+.nav-account-menu.open { display: block; }
+.nav-account-head { padding: 6px 10px 8px; }
+.nav-account-email { font-size: 12px; color: var(--muted); word-break: break-all; }
+.nav-account-div { height: 1px; background: var(--border); margin: 4px 2px 6px; }
+.nav-account-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none; background: none; color: var(--fg); font-family: inherit; font-size: 13px; text-align: left; border-radius: 8px; cursor: pointer; }
+.nav-account-item:hover { background: var(--border); }
+.nav-account-item svg { width: 15px; height: 15px; flex: none; }
 
 .container { max-width: 640px; margin: 0 auto; padding: 120px 24px 80px; }
 .hero { text-align: center; margin-bottom: 48px; }

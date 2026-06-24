@@ -87,6 +87,21 @@
         if(p&&p.classList.contains('open')&&!p.contains(e.target)&&b&&!b.contains(e.target))p.classList.remove('open');
     });
 
+    // ── Account menu (OCS-style TopBar: settings + logout live here) ──
+    window.toggleAccount=function(e){if(e)e.stopPropagation();var m=document.getElementById('accountMenu');if(m)m.classList.toggle('open')};
+    document.addEventListener('click',function(e){
+        var m=document.getElementById('accountMenu'),b=document.getElementById('accountBtn');
+        if(m&&m.classList.contains('open')&&!m.contains(e.target)&&b&&!b.contains(e.target))m.classList.remove('open');
+    });
+    (function(){
+        try{
+            var u=JSON.parse(localStorage.getItem('reyanda_user')||'null');
+            if(u){var n=document.getElementById('accountName'),em=document.getElementById('accountEmail');
+                if(n)n.textContent=u.name||(u.email||'').split('@')[0]||'Account';
+                if(em)em.textContent=u.email||'';}
+        }catch(_){}
+    })();
+
     window.pickQ=function(el){document.querySelectorAll('.quality-card').forEach(function(c){c.classList.remove('selected')});el.classList.add('selected');quality=el.dataset.q};
     window.setMode=function(m){audioMode=m;document.querySelectorAll('.audio-toggle-btn').forEach(function(b){b.classList.toggle('active',b.dataset.mode===m)});document.getElementById('audioFormats').classList.toggle('active',m==='audio');document.querySelectorAll('.quality-card').forEach(function(c){c.style.opacity=m==='audio'?'0.4':'1'});if(m==='audio'){quality='audio';document.querySelectorAll('.quality-card').forEach(function(c){c.classList.remove('selected')})}else{var d=document.querySelector('.quality-card[data-q="1080p"]');if(d){d.classList.add('selected');quality='1080p'}}};
     window.pickA=function(el){document.querySelectorAll('.audio-chip[data-fmt]').forEach(function(c){c.classList.remove('selected')});el.classList.add('selected');audioFmt=el.dataset.fmt};
