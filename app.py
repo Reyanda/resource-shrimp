@@ -442,6 +442,33 @@ def progress_hook(d, did):
                 'message': 'Processing...',
             })
 
+_ytdlp_cookie_path = None
+def ytdlp_cookies_file():
+    """Return a cookies.txt path for yt-dlp, or None.
+
+    Supports YTDLP_COOKIES_FILE (a path on the host) or YTDLP_COOKIES (the
+    Netscape cookie-file CONTENTS, e.g. pasted as a Render secret). This is the
+    reliable way past YouTube's 'confirm you're not a bot' check on cloud IPs.
+    Cached after the first write."""
+    global _ytdlp_cookie_path
+    p = (os.environ.get('YTDLP_COOKIES_FILE') or '').strip()
+    if p and os.path.isfile(p):
+        return p
+    raw = os.environ.get('YTDLP_COOKIES') or ''
+    if not raw.strip():
+        return None
+    if _ytdlp_cookie_path and os.path.isfile(_ytdlp_cookie_path):
+        return _ytdlp_cookie_path
+    try:
+        fd, path = tempfile.mkstemp(prefix='ytcookies_', suffix='.txt')
+        with os.fdopen(fd, 'w') as f:
+            f.write(raw if raw.endswith('\n') else raw + '\n')
+        _ytdlp_cookie_path = path
+        return path
+    except Exception:
+        return None
+
+
 def download_video(url, did, quality='1080p', subtitles=False, fmt='mp4'):
     global ACTIVE_DOWNLOADS
     temp_dir = tempfile.mkdtemp(dir=TEMP_ROOT, prefix="vid_")
@@ -473,6 +500,15 @@ def download_video(url, did, quality='1080p', subtitles=False, fmt='mp4'):
     }
 
     cmd = [sys.executable, '-m', 'yt_dlp', '--no-warnings', '--no-check-certificates']
+    # YouTube blocks datacenter IPs (cloud hosts) with a "confirm you're not a
+    # bot" check. Mitigate with (1) alternative player clients that avoid PO
+    # tokens and (2) optional cookies supplied via env (the reliable fix).
+    ex_args = os.environ.get('YTDLP_EXTRACTOR_ARGS', 'youtube:player_client=default,web_safari,mweb,tv')
+    if ex_args:
+        cmd += ['--extractor-args', ex_args]
+    ck = ytdlp_cookies_file()
+    if ck:
+        cmd += ['--cookies', ck]
     cmd += ['-o', os.path.join(temp_dir, '%(title)s.%(ext)s')]
 
     if quality == 'audio' or fmt in audio_fmts:
@@ -514,8 +550,14 @@ def download_video(url, did, quality='1080p', subtitles=False, fmt='mp4'):
         proc.wait()
         if proc.returncode != 0:
             err = proc.stderr.read()[:500]
+            msg = f'yt-dlp error: {err}'
+            low = err.lower()
+            if 'sign in to confirm' in low or ("not a bot" in low) or ('bot' in low and 'confirm' in low):
+                msg = ("YouTube blocked this download from the server's IP (bot check). "
+                       "Add your YouTube cookies as the YTDLP_COOKIES env var on the "
+                       "backend, or run the download from a residential connection.")
             with downloads_lock:
-                downloads[did].update({'status': 'error', 'error': err, 'message': f'yt-dlp error: {err}'})
+                downloads[did].update({'status': 'error', 'error': err, 'message': msg})
             return
 
         # Find output file
