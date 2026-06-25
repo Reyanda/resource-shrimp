@@ -12,7 +12,7 @@ services:
       - key: SIBLING_OCS_URL
         value: https://reyanda.github.io/open-canvas-studio/
       - key: CORS_ORIGINS
-        value: https://reyanda.github.io
+        value: https://reyanda.github.io,https://app.actiora.com
       # Google OAuth — set these in the Render dashboard (Env tab).
       # They are secrets so they must NOT appear in render.yaml.
       - key: GOOGLE_CLIENT_ID
