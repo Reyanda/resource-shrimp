@@ -538,6 +538,11 @@ def download_video(url, did, quality='1080p', subtitles=False, fmt='mp4'):
     ck = ytdlp_cookies_file()
     if ck:
         cmd += ['--cookies', ck]
+    # Route through a residential proxy (the reliable fix for YouTube blocking a
+    # flagged datacenter IP): set YTDLP_PROXY=http://user:pass@host:port.
+    proxy = (os.environ.get('YTDLP_PROXY') or '').strip()
+    if proxy:
+        cmd += ['--proxy', proxy]
     cmd += ['-o', os.path.join(temp_dir, '%(title)s.%(ext)s')]
 
     if quality == 'audio' or fmt in audio_fmts:
@@ -583,8 +588,9 @@ def download_video(url, did, quality='1080p', subtitles=False, fmt='mp4'):
             low = err.lower()
             if 'sign in to confirm' in low or ("not a bot" in low) or ('bot' in low and 'confirm' in low):
                 msg = ("YouTube blocked this download from the server's IP (bot check). "
-                       "Add your YouTube cookies as the YTDLP_COOKIES env var on the "
-                       "backend, or run the download from a residential connection.")
+                       "The reliable fixes: set YTDLP_PROXY to a residential proxy, or add "
+                       "YouTube cookies via YTDLP_COOKIES, on the backend. A cloud IP alone "
+                       "(Render/AWS) is too flagged for the bot check.")
             with downloads_lock:
                 downloads[did].update({'status': 'error', 'error': err, 'message': msg})
             return
